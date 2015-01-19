@@ -29,7 +29,7 @@ public class MultiSetupActivity extends Activity {
     private Button btn4;
     private Button checkroomname;
     private int amountplayers;
-    private Socket socket;
+    private Socket socket = new Socket();
     private Boolean next_activity;
     private Boolean validRoom;
     private BufferedReader infromServer;
@@ -39,6 +39,8 @@ public class MultiSetupActivity extends Activity {
     private Boolean readySendBuffer;
     private Boolean readyWarningBuffer;
     private String warningBuffer;
+    private EditText nickField;
+    private String nickname;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,13 +53,17 @@ public class MultiSetupActivity extends Activity {
         new Thread(new ListenThread()).start();
 
         this.room = (EditText) findViewById(R.id.roomname);
-        this.roomName = room.getText().toString();
+        this.nickField = (EditText) findViewById(R.id.nickname);
+        this.roomName = " ";
+        this.nickname = " ";
 
         this.btn2 = (Button) findViewById(R.id.p2);
         btn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                btn2.setBackgroundColor(Color.parseColor("8EFEB9"));
+                btn2.setBackgroundColor(Color.parseColor("#8EFEB9"));
+                btn3.setBackgroundColor(Color.parseColor("#499e6a"));
+                btn4.setBackgroundColor(Color.parseColor("#499e6a"));
                 amountplayers = 2;
             }
         });
@@ -66,7 +72,9 @@ public class MultiSetupActivity extends Activity {
         btn3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                btn2.setBackgroundColor(Color.parseColor("8EFEB9"));
+                btn3.setBackgroundColor(Color.parseColor("#8EFEB9"));
+                btn2.setBackgroundColor(Color.parseColor("#499e6a"));
+                btn4.setBackgroundColor(Color.parseColor("#499e6a"));
                 amountplayers = 3;
             }
         });
@@ -75,7 +83,9 @@ public class MultiSetupActivity extends Activity {
         btn4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                btn2.setBackgroundColor(Color.parseColor("8EFEB9"));
+                btn4.setBackgroundColor(Color.parseColor("#8EFEB9"));
+                btn2.setBackgroundColor(Color.parseColor("#499e6a"));
+                btn3.setBackgroundColor(Color.parseColor("#499e6a"));
                 amountplayers = 4;
             }
         });
@@ -84,8 +94,11 @@ public class MultiSetupActivity extends Activity {
         checkroomname.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendBuffer = "101" +roomName +"-" +amountplayers;
+                roomName = room.getText().toString();
+                nickname = nickField.getText().toString();
+                sendBuffer = "101" +roomName +"-" +nickname +"-" +amountplayers;
                 readySendBuffer = true;
+                new Thread(new ClientThread()).start();
             }
         });
 
@@ -114,6 +127,7 @@ public class MultiSetupActivity extends Activity {
         public void run() {
             if (socket.isBound()) {
                 try {
+                    System.out.println(sendBuffer +readySendBuffer);
                     if ((sendBuffer != null) && readySendBuffer) {
                         PrintWriter out = new PrintWriter(new BufferedWriter(
                                 new OutputStreamWriter(socket.getOutputStream())),
