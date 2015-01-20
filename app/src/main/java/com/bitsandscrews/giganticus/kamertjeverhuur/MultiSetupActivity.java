@@ -4,12 +4,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.os.Message;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -22,6 +25,7 @@ import java.net.UnknownHostException;
 
 public class MultiSetupActivity extends Activity {
 
+    private Boolean mRecieved = false;
     private String roomName;
     private EditText room;
     private Button btn2;
@@ -41,6 +45,11 @@ public class MultiSetupActivity extends Activity {
     private String warningBuffer;
     private EditText nickField;
     private String nickname;
+    private PrintWriter mBufferOut;
+    private BufferedReader mBufferIn;
+    private Boolean mRun;
+    private String mServerMessage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,14 +57,25 @@ public class MultiSetupActivity extends Activity {
         this.amountplayers = 0;
         this.next_activity = false;
         this.validRoom = false;
-
-        new Thread(new ClientThread()).start();
-        new Thread(new ListenThread()).start();
-
         this.room = (EditText) findViewById(R.id.roomname);
         this.nickField = (EditText) findViewById(R.id.nickname);
         this.roomName = " ";
         this.nickname = " ";
+        this.recvBuffer = "";
+        this.mRun = false;
+
+
+        new Thread(new ClientThread()).start();
+        eventThread();
+
+        room.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                room.setBackgroundColor(Color.WHITE);
+                checkroomname.setBackgroundColor(Color.parseColor("#499e6a"));
+                checkroomname.setText("Check Roomname");
+            }
+        });
 
         this.btn2 = (Button) findViewById(R.id.p2);
         btn2.setOnClickListener(new View.OnClickListener() {
@@ -114,101 +134,147 @@ public class MultiSetupActivity extends Activity {
                     if (validRoom){
                         intent.putExtra("roomname", roomName);
                         next_activity = true;
-                        //startActivity(intent);
                     }
                 }
             }
         });
     }
 
-    class ClientThread implements Runnable {
 
-        @Override
+    class ClientThread implements Runnable {
         public void run() {
-            if (socket.isBound()) {
+
+            while (true) {
+                mRun = true;
+
                 try {
-                    System.out.println(sendBuffer +readySendBuffer);
-                    if ((sendBuffer != null) && readySendBuffer) {
-                        PrintWriter out = new PrintWriter(new BufferedWriter(
-                                new OutputStreamWriter(socket.getOutputStream())),
-                                true);
-                        out.println(sendBuffer);
-                        sendBuffer = "";
-                        readySendBuffer = false;
+                    if(!socket.isConnected()) {
+                        socket = new Socket("46.4.112.245", 8097);
                     }
-                } catch (UnknownHostException e1) {
-                    e1.printStackTrace();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-            else {
-                try {
-                    socket = new Socket("46.4.112.245", 8097);
-                    room.setBackgroundColor(Color.RED);
-                } catch (UnknownHostException e1) {
-                    e1.printStackTrace();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                    //here you must put your computer's IP address.
+                    //InetAddress serverAddr = InetAddress.getByName(SERVER_IP);
+
+                    //Log.e("TCP Client", "C: Connecting...");
+
+                    //create a socket to make the connection with the server
+                    //Socket socket = new Socket(serverAddr, SERVER_PORT);
+
+                    try {
+                        Log.i("Debug", "inside try catch");
+                        //sends the message to the server
+                        mBufferOut = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
+
+                        //receives the message which the server sends back
+                        mBufferIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        // send login name
+                        //sendMessage(Constants.LOGIN_NAME + PreferencesManager.getInstance().getUserName());
+                        //sendMessage("Hi");
+                        //in this while the client listens for the messages sent by the server
+
+                        if ((sendBuffer != null) && readySendBuffer) {
+                            mBufferOut.println(sendBuffer);
+                            mBufferOut.flush();
+                            sendBuffer = "";
+                            readySendBuffer = false;
+                        }
+
+                        mServerMessage = mBufferIn.readLine();
+                        if (mServerMessage != null) {
+                            //call the method messageReceived from MyActivity class
+                            mRecieved = true;
+                            eventThread();
+                        }
+
+                        Log.e("RESPONSE FROM SERVER", "S: Received Message: '" + mServerMessage + "'");
+
+                    } catch (Exception e) {
+
+                        Log.e("TCP", "S: Error", e);
+
+                    }
+
+                } catch (Exception e) {
+
+                    Log.e("TCP", "C: Error", e);
+
                 }
             }
         }
     }
 
-    class ListenThread implements Runnable {
-
-        @Override
-        public void run() {
-            while (true) {
-                if (socket.isBound()) {
+    private void eventThread() {
+        runOnUiThread(new Thread(new Runnable() {
+            public void run() {
+                if (mRecieved) {
+                    message_handler(mServerMessage);
+                    mRecieved = false;
                     try {
-                        infromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()) );
-                        if (infromServer.readLine() != null) {
-                            if (recvBuffer == "")
-                            recvBuffer = infromServer.readLine();
-                            message_handler(recvBuffer);
-                        }
-                    } catch (UnknownHostException e1) {
-                        e1.printStackTrace();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                } else {
-                    android.os.SystemClock.sleep(5000);
                 }
             }
-        }
+        }));
     }
 
     public void message_handler(String recvBuffer){
+
         if(recvBuffer.startsWith("100")){
             startGame = true;
             checkroomname.setText("Room created!");
             checkroomname.setBackgroundColor(Color.GREEN);
         }
+        if(recvBuffer.startsWith("103")){
+            startGame = true;
+            checkroomname.setText("Joining session!");
+            checkroomname.setBackgroundColor(Color.GREEN);
+            gameLauncher(findViewById(R.id.roomname));
+        }
         if(recvBuffer.startsWith("403")){
             warningBuffer = "Room Busy";
+            System.out.println(warningBuffer);
             readyWarningBuffer = true;
-            new Thread(new WarningThread()).start();
-
+            warningThread();
         }
         if(recvBuffer.startsWith("404")){
             warningBuffer = "Select players!";
             readyWarningBuffer = true;
-            new Thread(new WarningThread()).start();
-
+            warningThread();
         }
     }
 
-    class WarningThread implements Runnable {
-        public void run() {
-            while(readyWarningBuffer){
-                checkroomname.setBackgroundColor(Color.RED);
-                checkroomname.setText(warningBuffer);
-                readyWarningBuffer = false;
-                android.os.SystemClock.sleep(5000);
-                checkroomname.setBackgroundColor(Color.GREEN);
-                checkroomname.setText("CHECK ROOMNAME");
+    private void warningThread() {
+        runOnUiThread(new Thread(new Runnable() {
+            public void run() {
+                while (readyWarningBuffer) {
+                    room.setBackgroundColor(Color.RED);
+                    room.setText(warningBuffer);
+                    readyWarningBuffer = false;
+                    checkroomname.setBackgroundColor(Color.GREEN);
+                    checkroomname.setText("CHECK ROOMNAME");
+                    readyWarningBuffer = false;
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }));
+    }
+
+    private void gameLauncher(View v){
+        Intent intent = new Intent(v.getContext(), MultiGridView.class);
+        if (roomName == ""){
+            room.setHint("Fill in Roomname!");
+        }
+        if (startGame){
+            if (validRoom){
+                intent.putExtra("roomname", roomName);
+                intent.putExtra("nickname", nickname);
+                next_activity = true;
+                startActivity(intent);
             }
         }
     }
