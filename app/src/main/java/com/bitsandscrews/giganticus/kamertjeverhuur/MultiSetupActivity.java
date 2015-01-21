@@ -34,7 +34,7 @@ public class MultiSetupActivity extends Activity {
     private Button checkroomname;
     private int amountplayers;
     private Socket socket = new Socket();
-    private Boolean next_activity;
+    private Boolean next_activity = false;
     private Boolean validRoom;
     private BufferedReader infromServer;
     private String recvBuffer;
@@ -130,12 +130,6 @@ public class MultiSetupActivity extends Activity {
                 if (roomName == ""){
                     room.setHint("Fill in Roomname!");
                 }
-                if (startGame){
-                    if (validRoom){
-                        intent.putExtra("roomname", roomName);
-                        next_activity = true;
-                    }
-                }
             }
         });
     }
@@ -144,7 +138,7 @@ public class MultiSetupActivity extends Activity {
     class ClientThread implements Runnable {
         public void run() {
 
-            while (true) {
+            while (true && !next_activity) {
                 mRun = true;
 
                 try {
@@ -205,7 +199,7 @@ public class MultiSetupActivity extends Activity {
     private void eventThread() {
         runOnUiThread(new Thread(new Runnable() {
             public void run() {
-                if (mRecieved) {
+                if (mRecieved && !next_activity) {
                     message_handler(mServerMessage);
                     mRecieved = false;
                     try {
@@ -224,6 +218,7 @@ public class MultiSetupActivity extends Activity {
             startGame = true;
             checkroomname.setText("Room created!");
             checkroomname.setBackgroundColor(Color.GREEN);
+            gameLauncher(findViewById(R.id.roomname));
         }
         if(recvBuffer.startsWith("103")){
             startGame = true;
@@ -247,7 +242,7 @@ public class MultiSetupActivity extends Activity {
     private void warningThread() {
         runOnUiThread(new Thread(new Runnable() {
             public void run() {
-                while (readyWarningBuffer) {
+                while (readyWarningBuffer && !next_activity) {
                     room.setBackgroundColor(Color.RED);
                     room.setText(warningBuffer);
                     readyWarningBuffer = false;
@@ -265,17 +260,16 @@ public class MultiSetupActivity extends Activity {
     }
 
     private void gameLauncher(View v){
-        Intent intent = new Intent(v.getContext(), MultiGridView.class);
+        Intent intent = new Intent(v.getContext(), MultiplayerActivity.class);
         if (roomName == ""){
             room.setHint("Fill in Roomname!");
         }
         if (startGame){
-            if (validRoom){
-                intent.putExtra("roomname", roomName);
-                intent.putExtra("nickname", nickname);
-                next_activity = true;
-                startActivity(intent);
-            }
+            intent.putExtra("roomname", roomName);
+            intent.putExtra("nickname", nickname);
+            intent.putExtra("playercount", amountplayers);
+            next_activity = true;
+            startActivity(intent);
         }
     }
 }

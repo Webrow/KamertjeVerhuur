@@ -1,5 +1,6 @@
 package com.bitsandscrews.giganticus.kamertjeverhuur;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -7,11 +8,19 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.EditText;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,8 +51,20 @@ public class MultiGridView extends View {
     private Player[] players;
     private int wallcolor;
     private int max_score;
+    private String sendBuffer = null;
+    private Boolean readySendBuffer = null;
+    private PrintWriter mBufferOut;
+    private BufferedReader mBufferIn;
+    private Boolean mRun;
+    private String mServerMessage;
+    private Boolean mRecieved = false;
+    private Socket gameConnection = new Socket();
+    private Context context;
+    private Boolean finished = false;
+    private String nickname;
+    private String roomname;
 
-    public MultiGridView(Context context, Player[] players) {
+    public MultiGridView(Context context, Player[] players, String nickname, String roomname) {
         super(context);
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
@@ -52,6 +73,9 @@ public class MultiGridView extends View {
         this.width = size.x;
         this.height = size.y;
         this.wallcolor = -11952534;
+        this.context = context;
+        this.roomname = roomname;
+        this.nickname = nickname;
 
         this.startGridX = width / 10;
         this.startGridY = height / 6;
@@ -67,12 +91,12 @@ public class MultiGridView extends View {
 
         background.setColor(Color.parseColor("#bce3cc"));
         background.setStyle(Paint.Style.FILL);
-
+        System.out.println("Im here");
         this.basebitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         this.edits = new Canvas(basebitmap);
         createGrid(edits);
-
-
+        System.out.println("Im here");
+        new Thread(new ClientThread()).start();
 
         invalidate();
     }
@@ -92,7 +116,11 @@ public class MultiGridView extends View {
         switch (maskedAction) {
 
             case MotionEvent.ACTION_DOWN:{
-                validateTouch(event.getX(), event.getY());
+                String y = Float.toString(event.getY());
+                String x = Float.toString(event.getX());
+                String message = "600" +roomname +"-" +nickname +"-" + x + "|" + y;
+                sender_handler(message);
+                //validateTouch(event.getX(), event.getY());
             }
         }
         invalidate();
@@ -392,5 +420,109 @@ public class MultiGridView extends View {
     @Override
     public void onDraw(Canvas canvas) {
         canvas.drawBitmap(basebitmap, 0, 0, null);
+    }
+
+    class ClientThread implements Runnable {
+        public void run() {
+            mRun = true;
+
+            try {
+                if(!gameConnection.isConnected()) {
+                    gameConnection = new Socket("46.4.112.245", 8097);
+                    sendBuffer = "118" +roomname +"-" +nickname;
+                    readySendBuffer = true;
+                }
+                //here you must put your computer's IP address.
+                //InetAddress serverAddr = InetAddress.getByName(SERVER_IP);
+
+                //Log.e("TCP Client", "C: Connecting...");
+
+                //create a socket to make the connection with the server
+                //Socket socket = new Socket(serverAddr, SERVER_PORT);
+
+                try {
+                    Log.i("Debug", "inside try catch");
+                    System.out.println("We are trying to send something");
+                    //sends the message to the server
+                    mBufferOut = new PrintWriter(new BufferedWriter(new OutputStreamWriter(gameConnection.getOutputStream())), true);
+
+                    //receives the message which the server sends back
+                    mBufferIn = new BufferedReader(new InputStreamReader(gameConnection.getInputStream()));
+                    // send login name
+                    //sendMessage(Constants.LOGIN_NAME + PreferencesManager.getInstance().getUserName());
+                    //sendMessage("Hi");
+                    //in this while the client listens for the messages sent by the server
+
+                    if ((sendBuffer != null) && readySendBuffer) {
+                        mBufferOut.println(sendBuffer);
+                        mBufferOut.flush();
+                        sendBuffer = "";
+                        readySendBuffer = false;
+                    }
+
+                    mServerMessage = mBufferIn.readLine();
+                    if (mServerMessage != null) {
+                        //call the method messageReceived from MyActivity class
+                        mRecieved = true;
+                        eventThread();
+                    }
+
+                    Log.e("RESPONSE FROM SERVER", "S: Received Message: '" + mServerMessage + "'");
+
+                } catch (Exception e) {
+
+                    Log.e("TCP", "S: Error", e);
+
+                }
+
+            } catch (Exception e) {
+
+                Log.e("TCP", "C: Error", e);
+
+            }
+        }
+    }
+
+    private void eventThread() {
+        ((Activity)context).runOnUiThread(new Thread(new Runnable() {
+            public void run() {
+                if (mRecieved) {
+                    message_handler(mServerMessage);
+                    mRecieved = false;
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }));
+    }
+
+    private void sender_handler(String sendMessage){
+        readySendBuffer = true;
+        sendBuffer = sendMessage;
+        new Thread(new ClientThread()).start();
+    }
+
+    private void message_handler(String mServerMessage){
+
+        if (mServerMessage.startsWith("603")){
+            //TODO Draw something, not their turn!
+        }
+        if (mServerMessage.startsWith("602")){
+            //TODO It is your turn!
+        }
+        if (mServerMessage.startsWith("601")){
+            String[] coordinates = mServerMessage.substring(4).split("|");
+            Float xtouch = Float.parseFloat(coordinates[0]);
+            Float ytouch = Float.parseFloat(coordinates[1]);
+            validateTouch(xtouch, ytouch);
+        }
+        if (mServerMessage.startsWith("604")){
+            //TODO Player has disconnected, game is ended.
+        }
+
+
     }
 }

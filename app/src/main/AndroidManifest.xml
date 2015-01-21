@@ -20,6 +20,7 @@
         <activity android:name=".OfflineActivity"></activity>
         <activity android:name=".PlayerActivity"></activity>
         <activity android:name=".MultiSetupActivity"></activity>
+        <activity android:name=".MultiplayerActivity"></activity>
     </application>
 
 </manifest>
