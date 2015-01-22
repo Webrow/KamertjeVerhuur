@@ -31,7 +31,7 @@ public class MultiSetupActivity extends Activity {
     private Button btn2;
     private Button btn3;
     private Button btn4;
-    private Button checkroomname;
+    private Button join;
     private int amountplayers;
     private Socket socket = new Socket();
     private Boolean next_activity = false;
@@ -64,7 +64,6 @@ public class MultiSetupActivity extends Activity {
         this.recvBuffer = "";
         this.mRun = false;
 
-
         new Thread(new ClientThread()).start();
         eventThread();
 
@@ -72,8 +71,8 @@ public class MultiSetupActivity extends Activity {
             @Override
             public void onClick(View v) {
                 room.setBackgroundColor(Color.WHITE);
-                checkroomname.setBackgroundColor(Color.parseColor("#499e6a"));
-                checkroomname.setText("Check Roomname");
+                join.setBackgroundColor(Color.parseColor("#499e6a"));
+                join.setText("Check Roomname");
             }
         });
 
@@ -110,8 +109,8 @@ public class MultiSetupActivity extends Activity {
             }
         });
 
-        this.checkroomname = (Button) findViewById(R.id.checkroomname);
-        checkroomname.setOnClickListener(new View.OnClickListener() {
+        this.join = (Button) findViewById(R.id.joincreate);
+        join.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 roomName = room.getText().toString();
@@ -119,17 +118,6 @@ public class MultiSetupActivity extends Activity {
                 sendBuffer = "101" +roomName +"-" +nickname +"-" +amountplayers;
                 readySendBuffer = true;
                 new Thread(new ClientThread()).start();
-            }
-        });
-
-        Button join = (Button) findViewById(R.id.joincreate);
-        join.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(v.getContext(), MultiGridView.class);
-                if (roomName == ""){
-                    room.setHint("Fill in Roomname!");
-                }
             }
         });
     }
@@ -216,14 +204,14 @@ public class MultiSetupActivity extends Activity {
 
         if(recvBuffer.startsWith("100")){
             startGame = true;
-            checkroomname.setText("Room created!");
-            checkroomname.setBackgroundColor(Color.GREEN);
+            join.setText("Room created!");
+            join.setBackgroundColor(Color.GREEN);
             gameLauncher(findViewById(R.id.roomname));
         }
         if(recvBuffer.startsWith("103")){
             startGame = true;
-            checkroomname.setText("Joining session!");
-            checkroomname.setBackgroundColor(Color.GREEN);
+            join.setText("Joining session!");
+            join.setBackgroundColor(Color.GREEN);
             this.amountplayers = Integer.parseInt(recvBuffer.substring(3));
             gameLauncher(findViewById(R.id.roomname));
         }
@@ -247,8 +235,8 @@ public class MultiSetupActivity extends Activity {
                     room.setBackgroundColor(Color.RED);
                     room.setText(warningBuffer);
                     readyWarningBuffer = false;
-                    checkroomname.setBackgroundColor(Color.GREEN);
-                    checkroomname.setText("CHECK ROOMNAME");
+                    join.setBackgroundColor(Color.GREEN);
+                    join.setText("CHECK ROOMNAME");
                     readyWarningBuffer = false;
                     try {
                         Thread.sleep(300);

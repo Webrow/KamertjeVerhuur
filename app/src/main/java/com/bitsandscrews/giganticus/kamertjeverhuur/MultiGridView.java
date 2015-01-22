@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -41,7 +42,7 @@ public class MultiGridView extends View {
     private int width;
     public int startGridX;
     public int startGridY;
-    public int wallsize = 150;
+    public int wallsize = 0;
     private Canvas canvas = new Canvas();
     public Canvas edits;
     public Point[] gridpoints = new Point[(rows+1)*(colums+1)];
@@ -65,6 +66,7 @@ public class MultiGridView extends View {
     private String roomname;
     private int currentplayer;
     private int myplayernumber;
+    private String nicknames[];
 
     public MultiGridView(Context context, Player[] players, String nickname, String roomname) {
         super(context);
@@ -78,11 +80,14 @@ public class MultiGridView extends View {
         this.context = context;
         this.roomname = roomname;
         this.nickname = nickname;
+        this.wallsize = width/8;
 
         this.startGridX = width / 10;
         this.startGridY = height / 6;
+        this.nicknames = new String[players.length];
 
         this.players = players;
+
         dotPaint.setColor(Color.parseColor("#499e6a"));
         dotPaint.setStyle(Paint.Style.FILL);
 
@@ -99,7 +104,6 @@ public class MultiGridView extends View {
         createGrid(edits);
         System.out.println("Im here");
         new Thread(new ClientThread()).start();
-
         invalidate();
     }
 
@@ -122,10 +126,29 @@ public class MultiGridView extends View {
                 int endY = startGridY + (rows*wallsize);
                 if ((event.getX() > startGridX) && (event.getX() < endX)){
                     if ((event.getY() > startGridY) && (event.getY() < endY)) {
-                        String y = Float.toString(event.getY());
-                        String x = Float.toString(event.getX());
-                        String message = "600" + roomname + "-" + nickname + "-" + x + "|" + y;
-                        sender_handler(message);
+                        for (int i = 0; i < wallpoints.length; i++) {
+                            int medianx = 1000;
+                            int mediany = 1000;
+                            if (wallpoints[i] != null) {
+                                System.out.println("eventx  = " +event.getX());
+                                System.out.println("eventy  = " +event.getY());
+                                medianx = Math.abs((wallpoints[i].x - (int)event.getX()) / 2);
+                                mediany = Math.abs((wallpoints[i].y - (int)event.getY()) / 2);
+                                System.out.println("medianx  = " +medianx);
+                                System.out.println("mediany  = " +mediany);
+                            }
+                            if ((medianx < 25) && (mediany < 25)) {
+                                System.out.println("x  = " +wallpoints[i].x);
+                                System.out.println("y  = " +wallpoints[i].y);
+                                String y = Float.toString((float)wallpoints[i].y / height);
+                                String x = Float.toString((float)wallpoints[i].x / width);
+                                System.out.println("width = " + width);
+                                System.out.println("heigth = " +height);
+                                String message = "600" + roomname + "-" + nickname + "-" + i;
+                                System.out.println("message = " +message);
+                                sender_handler(message);
+                            }
+                        }
                     }
                 }
             }
@@ -135,8 +158,6 @@ public class MultiGridView extends View {
     }
 
     public void drawTouch(float x, float y) {
-        int currentplayer = 0;
-
         Boolean isHorizontal = false;
         for (int i = 0; i < wallpoints.length; i++) {
             int medianx = 1000;
@@ -155,12 +176,16 @@ public class MultiGridView extends View {
                         edits.drawRect(wallpoints[i].x - wallsize, wallpoints[i].y - (wallsize / 2), wallpoints[i].x, wallpoints[i].y + (wallsize / 2), players[currentplayer].paint);
                         edits.drawRect(wallpoints[i].x - wallsize, wallpoints[i].y - (wallsize / 2), wallpoints[i].x, wallpoints[i].y + (wallsize / 2), gridPaint);
                         scoreHandler(players[currentplayer], 1);
+                        String message = "554" +roomname +"-" +nickname;
+                        sender_handler(message);
                     }
                     //rechts
                     if (whatsquare == 1) {
                         edits.drawRect(wallpoints[i].x, wallpoints[i].y - (wallsize / 2), wallpoints[i].x + wallsize, wallpoints[i].y + (wallsize / 2), players[currentplayer].paint);
                         edits.drawRect(wallpoints[i].x, wallpoints[i].y - (wallsize / 2), wallpoints[i].x + wallsize, wallpoints[i].y + (wallsize / 2), gridPaint);
                         scoreHandler(players[currentplayer], 1);
+                        String message = "554" +roomname +"-" +nickname;
+                        sender_handler(message);
                     }
                     if (whatsquare == 2) {
                         edits.drawRect(wallpoints[i].x, wallpoints[i].y - (wallsize / 2), wallpoints[i].x + wallsize, wallpoints[i].y + (wallsize / 2), players[currentplayer].paint);
@@ -168,6 +193,8 @@ public class MultiGridView extends View {
                         edits.drawRect(wallpoints[i].x - wallsize, wallpoints[i].y - (wallsize / 2), wallpoints[i].x, wallpoints[i].y + (wallsize / 2), players[currentplayer].paint);
                         edits.drawRect(wallpoints[i].x - wallsize, wallpoints[i].y - (wallsize / 2), wallpoints[i].x, wallpoints[i].y + (wallsize / 2), gridPaint);
                         scoreHandler(players[currentplayer], 2);
+                        String message = "554" +roomname +"-" +nickname;
+                        sender_handler(message);
                     }
                     //geen
                     if (whatsquare == -1){
@@ -188,12 +215,16 @@ public class MultiGridView extends View {
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y, wallpoints[i].x + (wallsize / 2), wallpoints[i].y + wallsize, players[currentplayer].paint);
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y, wallpoints[i].x + (wallsize / 2), wallpoints[i].y + wallsize, gridPaint);
                         scoreHandler(players[currentplayer], 1);
+                        String message = "554" +roomname +"-" +nickname;
+                        sender_handler(message);
                     }
                     //top
                     if (whatsquare == 1) {
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y - wallsize, wallpoints[i].x + (wallsize / 2), wallpoints[i].y, players[currentplayer].paint);
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y - wallsize, wallpoints[i].x + (wallsize / 2), wallpoints[i].y, gridPaint);
                         scoreHandler(players[currentplayer], 1);
+                        String message = "554" +roomname +"-" +nickname;
+                        sender_handler(message);
                     }
                     if (whatsquare == 2) {
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y - wallsize, wallpoints[i].x + (wallsize / 2), wallpoints[i].y, players[currentplayer].paint);
@@ -201,6 +232,8 @@ public class MultiGridView extends View {
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y, wallpoints[i].x + (wallsize / 2), wallpoints[i].y + wallsize, players[currentplayer].paint);
                         edits.drawRect(wallpoints[i].x - (wallsize / 2), wallpoints[i].y, wallpoints[i].x + (wallsize / 2), wallpoints[i].y + wallsize, gridPaint);
                         scoreHandler(players[currentplayer], 2);
+                        String message = "554" +roomname +"-" +nickname;
+                        sender_handler(message);
                     }
                     //geen
                     if (whatsquare == -1){
@@ -215,6 +248,8 @@ public class MultiGridView extends View {
             }
         }
         if (max_score >= rows*colums){
+            String message = "900" + roomname;
+            sender_handler(message);
             Context context = getContext();
             Intent i = new Intent(context, MainActivity.class);
             context.startActivity(i);
@@ -261,34 +296,29 @@ public class MultiGridView extends View {
                 counter++;
             }
         }
+
+        String message = "900" + roomname;
+        sender_handler(message);
+        Handler myHandler = new Handler();
+        myHandler.postDelayed(closegame, 6000);
     }
+
+    private Runnable closegame = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            Context context = getContext();
+            Intent j = new Intent(context, MainActivity.class);
+            context.startActivity(j);
+        }
+    };
 
     class PlayerComparator implements Comparator<Player> {
         public int compare(Player p1, Player p2) {
             return p1.getScore() < p2.getScore() ? -1
                     : p1.getScore() > p2.getScore() ? 1 : 0;
         }
-    }
-
-    public void turnHandler(Player player){
-        int currentplayer = 0, nextplayer = 0;
-        int i, next;
-        for(i = 0; i < players.length; i++){
-            if (players[i].myTurn) {
-                currentplayer = players[i].playernumber;
-                players[i].myTurn = false;
-            }
-            nextplayer = currentplayer + 1;
-        }
-        if (nextplayer < players.length) {
-            players[nextplayer].myTurn = true;
-        }
-        else {
-            nextplayer = 0;
-            players[0].myTurn = true;
-        }
-        edits.drawRect(0, 110 ,width, startGridY - 20, background);
-        edits.drawText("^", 100 + (nextplayer * 250), 210, players[nextplayer].painttext);
     }
 
     public void scoreHandler(Player player, int amount){
@@ -300,7 +330,7 @@ public class MultiGridView extends View {
         for (int i = 0; i < players.length; i++){
 
             int padmodx = 50 + (i * 250);
-            edits.drawText(players[i].getPlayerName() + " = " + players[i].score, padmodx, 100, players[i].painttext);
+            edits.drawText(nicknames[i] + " = " + players[i].score, padmodx, 100, players[i].painttext);
         }
     }
 
@@ -368,13 +398,6 @@ public class MultiGridView extends View {
     }
 
     public void createGrid(Canvas edits){
-        for (int i = 0; i < players.length; i++){
-            int padmodx = 50 + (i * 250);
-            edits.drawText(players[i].getPlayerName() + " = " + players[i].score, padmodx, 100, players[i].painttext);
-        }
-
-        edits.drawRect(0, 110 ,width, startGridY - 20, background);
-        edits.drawText("^", 100, 210, players[0].painttext);
 
         edits.drawRect(startGridX, startGridY, startGridX + (rows * wallsize), startGridY + (colums * wallsize), gridPaint);
         int i, j, x, y;
@@ -516,46 +539,59 @@ public class MultiGridView extends View {
     private void message_handler(String mServerMessage){
 
         if (mServerMessage.startsWith("603")){
-            //TODO Draw something, not their turn!
+            String currentpl = mServerMessage.substring(3);
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
             edits.drawText("Wait for your turn", 100, 210, players[myplayernumber].painttext);
+            currentplayer = Integer.parseInt(currentpl);
             invalidate();
         }
         if (mServerMessage.startsWith("602")){
-            //TODO It is your turn!
-            //TODO Draw something on screen
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
             edits.drawText("It is your turn", 100, 210, players[myplayernumber].painttext);
+            this.currentplayer = myplayernumber;
+            System.out.println("Currentplayer = " +currentplayer);
             invalidate();
         }
         if (mServerMessage.startsWith("601")){
             String message = mServerMessage.substring(3);
-            String[] coordinates = message.split("\\|");
-            System.out.println(coordinates[0]);
-            System.out.println(coordinates[1]);
-            Float xtouch = Float.parseFloat(coordinates[0]);
-            Float ytouch = Float.parseFloat(coordinates[1]);
+            int selectwall = Integer.parseInt(message);
+            Float xtouch = (float)wallpoints[selectwall].x;
+            Float ytouch = (float)wallpoints[selectwall].y;
+            System.out.println(xtouch);
+            System.out.println(ytouch);
             drawTouch(xtouch, ytouch);
             invalidate();
         }
         if (mServerMessage.startsWith("604")){
-            //TODO Player has disconnected, game is ended.
         }
         if (mServerMessage.startsWith("599")){
-            //TODO Welcome, your number =
             String number = mServerMessage.substring(3);
-            this.myplayernumber = Integer.parseInt(number);
+            myplayernumber = Integer.parseInt(number);
+            System.out.println("My playernumber = " +myplayernumber);
         }
         if (mServerMessage.startsWith("598")){
-            //TODO Room not ready
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
             edits.drawText("Room is not full yet", 100, 210, players[myplayernumber].painttext);
             invalidate();
         }
         if (mServerMessage.startsWith("597")){
-            //TODO Room ready
+            String currentpl = mServerMessage.substring(3);
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
-            edits.drawText("Room is not full yet", 100, 210, players[myplayernumber].painttext);
+            edits.drawText("Wait for your turn", 100, 210, players[myplayernumber].painttext);
+            currentplayer = Integer.parseInt(currentpl);
+            invalidate();
+        }
+
+        if (mServerMessage.startsWith("999")){
+            String nicks = mServerMessage.substring(3);
+            String split[] = nicks.split("\\|");
+            for (int i = 0; i < split.length; i++){
+                nicknames[i] = split[i];
+            }
+            for (int i = 0; i < players.length; i++){
+                int padmodx = 50 + (i * 250);
+                edits.drawText(nicknames[i] + " = " + players[i].score, padmodx, 100, players[i].painttext);
+            }
             invalidate();
         }
     }

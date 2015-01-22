@@ -31,7 +31,7 @@ public class Player{
 
         painttext.setColor(color);
         painttext.setStyle(Paint.Style.STROKE);
-        painttext.setTextSize(60);
+        painttext.setTextSize(42);
         painttext.setAntiAlias(true);
         painttext.setStrokeWidth(3);
 
