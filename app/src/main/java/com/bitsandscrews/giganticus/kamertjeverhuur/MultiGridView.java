@@ -575,10 +575,8 @@ public class MultiGridView extends View {
             invalidate();
         }
         if (mServerMessage.startsWith("597")){
-            String currentpl = mServerMessage.substring(3);
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
             edits.drawText("Wait for your turn", 100, 210, players[myplayernumber].painttext);
-            currentplayer = Integer.parseInt(currentpl);
             invalidate();
         }
 
