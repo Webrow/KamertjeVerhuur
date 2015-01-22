@@ -63,6 +63,8 @@ public class MultiGridView extends View {
     private Boolean finished = false;
     private String nickname;
     private String roomname;
+    private int currentplayer;
+    private int myplayernumber;
 
     public MultiGridView(Context context, Player[] players, String nickname, String roomname) {
         super(context);
@@ -116,24 +118,24 @@ public class MultiGridView extends View {
         switch (maskedAction) {
 
             case MotionEvent.ACTION_DOWN:{
-                String y = Float.toString(event.getY());
-                String x = Float.toString(event.getX());
-                String message = "600" +roomname +"-" +nickname +"-" + x + "|" + y;
-                sender_handler(message);
-                //validateTouch(event.getX(), event.getY());
+                int endX = startGridX + (colums*wallsize);
+                int endY = startGridY + (rows*wallsize);
+                if ((event.getX() > startGridX) && (event.getX() < endX)){
+                    if ((event.getY() > startGridY) && (event.getY() < endY)) {
+                        String y = Float.toString(event.getY());
+                        String x = Float.toString(event.getX());
+                        String message = "600" + roomname + "-" + nickname + "-" + x + "|" + y;
+                        sender_handler(message);
+                    }
+                }
             }
         }
         invalidate();
         return true;
     }
 
-    public void validateTouch(float x, float y) {
+    public void drawTouch(float x, float y) {
         int currentplayer = 0;
-
-        for( int i = 0; i < players.length; i++){
-            if (players[i].myTurn)
-                currentplayer = i;
-        }
 
         Boolean isHorizontal = false;
         for (int i = 0; i < wallpoints.length; i++) {
@@ -169,7 +171,10 @@ public class MultiGridView extends View {
                     }
                     //geen
                     if (whatsquare == -1){
-                        turnHandler(players[currentplayer]);
+                        //TODO PINGBACK ik ben klaar
+                        String message = "555" +roomname +"-" +nickname;
+                        sender_handler(message);
+                        //turnHandler(players[currentplayer]);
                     }
                     wallpoints[i] = null;
                     break;
@@ -199,7 +204,10 @@ public class MultiGridView extends View {
                     }
                     //geen
                     if (whatsquare == -1){
-                        turnHandler(players[currentplayer]);
+                        //TODO PINGBACK ik ben klaar
+                        String message = "555" +roomname +"-" +nickname;
+                        sender_handler(message);
+                        //turnHandler(players[currentplayer]);
                     }
                     wallpoints[i] = null;
                     break;
@@ -221,7 +229,6 @@ public class MultiGridView extends View {
             }
         }
     }
-
 
     public void finishBattle() {
         Player[] results;
@@ -489,6 +496,7 @@ public class MultiGridView extends View {
                 if (mRecieved) {
                     message_handler(mServerMessage);
                     mRecieved = false;
+                    new Thread(new ClientThread()).start();
                     try {
                         Thread.sleep(300);
                     } catch (InterruptedException e) {
@@ -509,20 +517,46 @@ public class MultiGridView extends View {
 
         if (mServerMessage.startsWith("603")){
             //TODO Draw something, not their turn!
+            edits.drawRect(0, 110 ,width, startGridY - 20, background);
+            edits.drawText("Wait for your turn", 100, 210, players[myplayernumber].painttext);
+            invalidate();
         }
         if (mServerMessage.startsWith("602")){
             //TODO It is your turn!
+            //TODO Draw something on screen
+            edits.drawRect(0, 110 ,width, startGridY - 20, background);
+            edits.drawText("It is your turn", 100, 210, players[myplayernumber].painttext);
+            invalidate();
         }
         if (mServerMessage.startsWith("601")){
-            String[] coordinates = mServerMessage.substring(4).split("|");
+            String message = mServerMessage.substring(3);
+            String[] coordinates = message.split("\\|");
+            System.out.println(coordinates[0]);
+            System.out.println(coordinates[1]);
             Float xtouch = Float.parseFloat(coordinates[0]);
             Float ytouch = Float.parseFloat(coordinates[1]);
-            validateTouch(xtouch, ytouch);
+            drawTouch(xtouch, ytouch);
+            invalidate();
         }
         if (mServerMessage.startsWith("604")){
             //TODO Player has disconnected, game is ended.
         }
-
-
+        if (mServerMessage.startsWith("599")){
+            //TODO Welcome, your number =
+            String number = mServerMessage.substring(3);
+            this.myplayernumber = Integer.parseInt(number);
+        }
+        if (mServerMessage.startsWith("598")){
+            //TODO Room not ready
+            edits.drawRect(0, 110 ,width, startGridY - 20, background);
+            edits.drawText("Room is not full yet", 100, 210, players[myplayernumber].painttext);
+            invalidate();
+        }
+        if (mServerMessage.startsWith("597")){
+            //TODO Room ready
+            edits.drawRect(0, 110 ,width, startGridY - 20, background);
+            edits.drawText("Room is not full yet", 100, 210, players[myplayernumber].painttext);
+            invalidate();
+        }
     }
 }

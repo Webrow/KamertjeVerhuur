@@ -224,6 +224,7 @@ public class MultiSetupActivity extends Activity {
             startGame = true;
             checkroomname.setText("Joining session!");
             checkroomname.setBackgroundColor(Color.GREEN);
+            this.amountplayers = Integer.parseInt(recvBuffer.substring(3));
             gameLauncher(findViewById(R.id.roomname));
         }
         if(recvBuffer.startsWith("403")){

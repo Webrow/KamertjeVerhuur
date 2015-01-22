@@ -24,9 +24,6 @@ public class MultiplayerActivity extends Activity {
         //Create the players
         initPlayers();
 
-        Bundle bundle2 = getIntent().getExtras();
-
-
         canvasview = new MultiGridView(this, players, nickname, roomname);
         gridpoints = canvasview.gridpoints;
         walls = canvasview.wallpoints;
@@ -45,6 +42,7 @@ public class MultiplayerActivity extends Activity {
 
         this.setContentView(myLayout);
     }
+
 
     public void initWalls(Point[] walls) {
         this.walls = canvasview.wallpoints;
