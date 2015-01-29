@@ -11,7 +11,7 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import java.lang.Math;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;

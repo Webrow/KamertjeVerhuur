@@ -58,16 +58,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="150dp"
         android:background="#499e6a" />
-    <Button
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:text="BEST BRAWLERS!"
-        android:textSize="32dp"
-        android:id="@+id/btn_score"
-        android:layout_below="@+id/textView2"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="215dp"
-        android:background="#499e6a" />
+
 
 
 </RelativeLayout>

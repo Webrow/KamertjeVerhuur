@@ -3,12 +3,9 @@ package com.bitsandscrews.giganticus.kamertjeverhuur;
 /**
  * Created by Rowan on 11-12-2014.
  */
-import android.graphics.Canvas;
+
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
-
-import java.util.Random;
 
 public class Player{
 

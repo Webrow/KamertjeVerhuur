@@ -14,7 +14,6 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.EditText;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -2,15 +2,11 @@ package com.bitsandscrews.giganticus.kamertjeverhuur;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 
 public class MainActivity extends Activity {
@@ -39,17 +35,6 @@ public class MainActivity extends Activity {
                 startActivityForResult(intent, 0);
             }
         });
-
-        //Switch to the Score activity
-        Button btnscore = (Button) findViewById(R.id.btn_score);
-        btnscore.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(v.getContext(), OfflineActivity.class);
-                startActivityForResult(intent, 0);
-            }
-        });
-
     }
 
 
