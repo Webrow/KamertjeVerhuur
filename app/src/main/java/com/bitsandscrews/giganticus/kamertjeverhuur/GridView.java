@@ -49,14 +49,18 @@ public class GridView extends View {
         Display display = wm.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
+
+        //Inits
         this.width = size.x;
         this.height = size.y;
         this.wallcolor = -11952534;
-
         this.startGridX = width / 10;
         this.startGridY = height / 6;
-
         this.players = players;
+        this.basebitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        this.edits = new Canvas(basebitmap);
+
+        //Paints
         dotPaint.setColor(Color.parseColor("#499e6a"));
         dotPaint.setStyle(Paint.Style.FILL);
 
@@ -68,12 +72,10 @@ public class GridView extends View {
         background.setColor(Color.parseColor("#bce3cc"));
         background.setStyle(Paint.Style.FILL);
 
-        this.basebitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        this.edits = new Canvas(basebitmap);
+        //Init Grid
         createGrid(edits);
 
-
-
+        //Redraw Canvas
         invalidate();
     }
 
@@ -99,6 +101,13 @@ public class GridView extends View {
         return true;
     }
 
+    //Validate touch checks whoose turn it is and draws a wall whenever a wall is pressed.
+    //After touching a wall a squarecheck is done to see if all 4 walls are standing
+    //If so the walls get colored in the color of the player.
+    //After this the scorehandler gets called which updates the score, and eventually
+    //the turnhandler is raised which decided wether its the next players turn.
+    //Afterthe max score has been reached ( 36 ) finishbattle is raised.
+    //A scoreboard shows who won the match.
     public void validateTouch(float x, float y) {
         int currentplayer = 0;
 
@@ -141,7 +150,7 @@ public class GridView extends View {
                     }
                     //geen
                     if (whatsquare == -1){
-                        turnHandler(players[currentplayer]);
+                        turnHandler();
                     }
                     wallpoints[i] = null;
                     break;
@@ -171,7 +180,7 @@ public class GridView extends View {
                     }
                     //geen
                     if (whatsquare == -1){
-                        turnHandler(players[currentplayer]);
+                        turnHandler();
                     }
                     wallpoints[i] = null;
                     break;
@@ -194,7 +203,7 @@ public class GridView extends View {
         }
     }
 
-
+    //Create scoreboard, show who wins.
     public void finishBattle() {
         Player[] results;
         results = players;
@@ -228,6 +237,7 @@ public class GridView extends View {
         }
     }
 
+    //Class for sorting scores.
     class PlayerComparator implements Comparator<Player> {
         public int compare(Player p1, Player p2) {
             return p1.getScore() < p2.getScore() ? -1
@@ -235,9 +245,10 @@ public class GridView extends View {
         }
     }
 
-    public void turnHandler(Player player){
+    //Check whoose turn it is, and sets an indicator
+    public void turnHandler(){
         int currentplayer = 0, nextplayer = 0;
-        int i, next;
+        int i;
         for(i = 0; i < players.length; i++){
             if (players[i].myTurn) {
                 currentplayer = players[i].playernumber;
@@ -256,6 +267,7 @@ public class GridView extends View {
         edits.drawText("^", 100 + (nextplayer * 250), 210, players[nextplayer].painttext);
     }
 
+    //Handles scores
     public void scoreHandler(Player player, int amount){
 
         edits.drawRect(0, 0,width, 100, background);
@@ -332,6 +344,7 @@ public class GridView extends View {
         return -1;
     }
 
+    //Draws the playingfield
     public void createGrid(Canvas edits){
         for (int i = 0; i < players.length; i++){
             int padmodx = 50 + (i * 250);

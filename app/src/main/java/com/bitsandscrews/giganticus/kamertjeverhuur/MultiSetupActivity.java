@@ -127,25 +127,12 @@ public class MultiSetupActivity extends Activity {
                     if(!socket.isConnected()) {
                         socket = new Socket("46.4.112.245", 8097);
                     }
-                    //here you must put your computer's IP address.
-                    //InetAddress serverAddr = InetAddress.getByName(SERVER_IP);
-
-                    //Log.e("TCP Client", "C: Connecting...");
-
-                    //create a socket to make the connection with the server
-                    //Socket socket = new Socket(serverAddr, SERVER_PORT);
 
                     try {
                         Log.i("Debug", "inside try catch");
-                        //sends the message to the server
                         mBufferOut = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
 
-                        //receives the message which the server sends back
                         mBufferIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        // send login name
-                        //sendMessage(Constants.LOGIN_NAME + PreferencesManager.getInstance().getUserName());
-                        //sendMessage("Hi");
-                        //in this while the client listens for the messages sent by the server
 
                         if ((sendBuffer != null) && readySendBuffer) {
                             mBufferOut.println(sendBuffer);
@@ -194,6 +181,10 @@ public class MultiSetupActivity extends Activity {
         }));
     }
 
+    //Received 100 : Room created
+    //Received 103 : Joining session ( Received after 100 )
+    //Received 403 : Room busy ( max players has already been reached )
+    //Received 404 : Players not selected, select amount of players.
     public void message_handler(String recvBuffer){
 
         if(recvBuffer.startsWith("100")){
@@ -211,7 +202,6 @@ public class MultiSetupActivity extends Activity {
         }
         if(recvBuffer.startsWith("403")){
             warningBuffer = "Room Busy";
-            System.out.println(warningBuffer);
             readyWarningBuffer = true;
             warningThread();
         }
@@ -222,6 +212,7 @@ public class MultiSetupActivity extends Activity {
         }
     }
 
+    //Whenever a warning is triggered ( room busy, Select players, the appropriate warning is set
     private void warningThread() {
         runOnUiThread(new Thread(new Runnable() {
             public void run() {
@@ -242,6 +233,7 @@ public class MultiSetupActivity extends Activity {
         }));
     }
 
+    //launch the game
     private void gameLauncher(View v){
         Intent intent = new Intent(v.getContext(), MultiplayerActivity.class);
         if (roomName == ""){

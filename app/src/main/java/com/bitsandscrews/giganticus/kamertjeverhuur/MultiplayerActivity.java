@@ -28,9 +28,6 @@ public class MultiplayerActivity extends Activity {
         gridpoints = canvasview.gridpoints;
         walls = canvasview.wallpoints;
 
-
-
-        //testing
         RelativeLayout myLayout = new RelativeLayout(this);
         myLayout.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         myLayout.setBackgroundColor(Color.parseColor("#bce3cc"));

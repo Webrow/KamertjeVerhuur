@@ -73,6 +73,8 @@ public class MultiGridView extends View {
         Display display = wm.getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
+
+        //inits
         this.width = size.x;
         this.height = size.y;
         this.wallcolor = -11952534;
@@ -80,32 +82,30 @@ public class MultiGridView extends View {
         this.roomname = roomname;
         this.nickname = nickname;
         this.wallsize = width/8;
-
         this.startGridX = width / 10;
         this.startGridY = height / 6;
         this.nicknames = new String[players.length];
-
         this.players = players;
+        this.basebitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        this.edits = new Canvas(basebitmap);
 
+        //paints
         dotPaint.setColor(Color.parseColor("#499e6a"));
         dotPaint.setStyle(Paint.Style.FILL);
-
         gridPaint.setColor(Color.parseColor("#499e6a"));
         gridPaint.setStyle(Paint.Style.STROKE);
         gridPaint.setAntiAlias(true);
         gridPaint.setStrokeWidth(12);
-
         background.setColor(Color.parseColor("#bce3cc"));
         background.setStyle(Paint.Style.FILL);
-        System.out.println("Im here");
-        this.basebitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        this.edits = new Canvas(basebitmap);
+
         createGrid(edits);
-        System.out.println("Im here");
         new Thread(new ClientThread()).start();
         invalidate();
     }
 
+    //Sends a 600 with a move, whenever it is the players turn, he'll recieved a 601 to draw the turn.
+    //If the player is hasty and it is not his turn he'll recieve a 603. !NOT YOUR TURN!
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -129,22 +129,13 @@ public class MultiGridView extends View {
                             int medianx = 1000;
                             int mediany = 1000;
                             if (wallpoints[i] != null) {
-                                System.out.println("eventx  = " +event.getX());
-                                System.out.println("eventy  = " +event.getY());
                                 medianx = Math.abs((wallpoints[i].x - (int)event.getX()) / 2);
                                 mediany = Math.abs((wallpoints[i].y - (int)event.getY()) / 2);
-                                System.out.println("medianx  = " +medianx);
-                                System.out.println("mediany  = " +mediany);
                             }
                             if ((medianx < 25) && (mediany < 25)) {
-                                System.out.println("x  = " +wallpoints[i].x);
-                                System.out.println("y  = " +wallpoints[i].y);
                                 String y = Float.toString((float)wallpoints[i].y / height);
                                 String x = Float.toString((float)wallpoints[i].x / width);
-                                System.out.println("width = " + width);
-                                System.out.println("heigth = " +height);
                                 String message = "600" + roomname + "-" + nickname + "-" + i;
-                                System.out.println("message = " +message);
                                 sender_handler(message);
                             }
                         }
@@ -156,6 +147,7 @@ public class MultiGridView extends View {
         return true;
     }
 
+    //Sends a 555(Drawn, no square) or a 554(Drawn, was square) to the server.
     public void drawTouch(float x, float y) {
         Boolean isHorizontal = false;
         for (int i = 0; i < wallpoints.length; i++) {
@@ -197,10 +189,8 @@ public class MultiGridView extends View {
                     }
                     //geen
                     if (whatsquare == -1){
-                        //TODO PINGBACK ik ben klaar
                         String message = "555" +roomname +"-" +nickname;
                         sender_handler(message);
-                        //turnHandler(players[currentplayer]);
                     }
                     wallpoints[i] = null;
                     break;
@@ -236,22 +226,13 @@ public class MultiGridView extends View {
                     }
                     //geen
                     if (whatsquare == -1){
-                        //TODO PINGBACK ik ben klaar
                         String message = "555" +roomname +"-" +nickname;
                         sender_handler(message);
-                        //turnHandler(players[currentplayer]);
                     }
                     wallpoints[i] = null;
                     break;
                 }
             }
-        }
-        if (max_score >= rows*colums){
-            String message = "900" + roomname;
-            sender_handler(message);
-            Context context = getContext();
-            Intent i = new Intent(context, MainActivity.class);
-            context.startActivity(i);
         }
 
         max_score = 0;
@@ -296,6 +277,7 @@ public class MultiGridView extends View {
             }
         }
 
+        //Sends a 900, game end to server
         String message = "900" + roomname;
         sender_handler(message);
         Handler myHandler = new Handler();
@@ -313,6 +295,7 @@ public class MultiGridView extends View {
         }
     };
 
+    //Class for sorting scores.
     class PlayerComparator implements Comparator<Player> {
         public int compare(Player p1, Player p2) {
             return p1.getScore() < p2.getScore() ? -1
@@ -320,6 +303,7 @@ public class MultiGridView extends View {
         }
     }
 
+    //Handles scores
     public void scoreHandler(Player player, int amount){
 
         edits.drawRect(0, 0,width, 100, background);
@@ -396,6 +380,7 @@ public class MultiGridView extends View {
         return -1;
     }
 
+    //Create initial canvas
     public void createGrid(Canvas edits){
 
         edits.drawRect(startGridX, startGridY, startGridX + (rows * wallsize), startGridY + (colums * wallsize), gridPaint);
@@ -461,26 +446,16 @@ public class MultiGridView extends View {
                     sendBuffer = "118" +roomname +"-" +nickname;
                     readySendBuffer = true;
                 }
-                //here you must put your computer's IP address.
-                //InetAddress serverAddr = InetAddress.getByName(SERVER_IP);
 
-                //Log.e("TCP Client", "C: Connecting...");
-
-                //create a socket to make the connection with the server
-                //Socket socket = new Socket(serverAddr, SERVER_PORT);
 
                 try {
                     Log.i("Debug", "inside try catch");
-                    System.out.println("We are trying to send something");
                     //sends the message to the server
                     mBufferOut = new PrintWriter(new BufferedWriter(new OutputStreamWriter(gameConnection.getOutputStream())), true);
 
                     //receives the message which the server sends back
                     mBufferIn = new BufferedReader(new InputStreamReader(gameConnection.getInputStream()));
-                    // send login name
-                    //sendMessage(Constants.LOGIN_NAME + PreferencesManager.getInstance().getUserName());
-                    //sendMessage("Hi");
-                    //in this while the client listens for the messages sent by the server
+
 
                     if ((sendBuffer != null) && readySendBuffer) {
                         mBufferOut.println(sendBuffer);
@@ -491,7 +466,6 @@ public class MultiGridView extends View {
 
                     mServerMessage = mBufferIn.readLine();
                     if (mServerMessage != null) {
-                        //call the method messageReceived from MyActivity class
                         mRecieved = true;
                         eventThread();
                     }
@@ -535,6 +509,14 @@ public class MultiGridView extends View {
         new Thread(new ClientThread()).start();
     }
 
+    //Message handler.
+    //603 : Not your turn, sends whoevers turn it is
+    //602 : Your turn
+    //601 : Draw this set
+    //599 : My playernumber
+    //598 : Room not full yet
+    //597 : Recieved after room ready, but it is not your turn.
+    //999 : Nickname list
     private void message_handler(String mServerMessage){
 
         if (mServerMessage.startsWith("603")){
@@ -548,7 +530,6 @@ public class MultiGridView extends View {
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
             edits.drawText("It is your turn", 100, 210, players[myplayernumber].painttext);
             this.currentplayer = myplayernumber;
-            System.out.println("Currentplayer = " +currentplayer);
             invalidate();
         }
         if (mServerMessage.startsWith("601")){
@@ -556,17 +537,12 @@ public class MultiGridView extends View {
             int selectwall = Integer.parseInt(message);
             Float xtouch = (float)wallpoints[selectwall].x;
             Float ytouch = (float)wallpoints[selectwall].y;
-            System.out.println(xtouch);
-            System.out.println(ytouch);
             drawTouch(xtouch, ytouch);
             invalidate();
-        }
-        if (mServerMessage.startsWith("604")){
         }
         if (mServerMessage.startsWith("599")){
             String number = mServerMessage.substring(3);
             myplayernumber = Integer.parseInt(number);
-            System.out.println("My playernumber = " +myplayernumber);
         }
         if (mServerMessage.startsWith("598")){
             edits.drawRect(0, 110 ,width, startGridY - 20, background);
